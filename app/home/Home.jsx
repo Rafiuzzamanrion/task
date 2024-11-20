@@ -17,21 +17,37 @@ const HomePage = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const getCsrfToken = async () => {
+    try {
+      const response = await axios.get(
+        "https://social-login.druckland.de/api/v1/csrf-token"
+      );
+      return response.data.csrfToken;
+    } catch (error) {
+      toast.error("Failed to fetch CSRF token.");
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
+      const csrfToken = await getCsrfToken();
+
       const response = await axios.post(
         "https://social-login.druckland.de/api/v1/user/signin",
+        { email, password },
         {
-          email,
-          password,
+          headers: {
+            "X-CSRF-Token": csrfToken,
+          },
         }
       );
 
       toast.success(`Success: ${response.data.message || "Login successful!"}`);
     } catch (error) {
-      console.log(error);
       toast.error(
         `Error: ${error.response?.data?.message || "Something went wrong!"}`
       );
